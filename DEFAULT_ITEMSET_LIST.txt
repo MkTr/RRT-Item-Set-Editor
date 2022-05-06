@@ -1,0 +1,252 @@
+000.00 Throwables			Categories
+000.00 Rocks
+000.00 Berries + Seeds
+000.00 Food + Gummies
+000.00 Hold Items
+000.00 TMs
+000.00 Money (remember to set POKé chance to 100)
+000.00 Unused
+000.00 Misc (keys)
+000.00 Orbs
+000.00 Machines (link box, unused stuff)
+000.00 Used TM
+000.00 Nothing				Items
+000.00 Stick			Throwables
+000.00 Iron Thorn
+000.00 Silver Spike
+000.00 Gold Fang
+000.00 Cacnea Spike
+000.00 Corsola Twig
+000.00 Gravelerock		Rocks
+000.00 Geo Pebble
+000.00 Mobile Scarf		Hold Items
+000.00 Heal Ribbon
+000.00 Twist Band
+000.00 Scope Lens
+000.00 Patsy Band
+000.00 No-Stick Cap
+000.00 Pierce Band
+000.00 Joy Ribbon
+000.00 X-Ray Specs
+000.00 Persim Band
+000.00 Power Band
+000.00 Pecha Scarf
+000.00 Insomniscope
+000.00 Warp Scarf
+000.00 Tight Belt
+000.00 Sneak Scarf
+000.00 Gold Ribbon
+000.00 Goggle Specs
+000.00 Diet Ribbon
+000.00 Trap Scarf
+000.00 Racket Band
+000.00 Def. Scarf
+000.00 Stamina Band
+000.00 Plain Ribbon
+000.00 Special Band
+000.00 Zinc Band
+000.00 Detect Band
+000.00 Alert Specs
+000.00 Dodge Scarf
+000.00 Bounce Band
+000.00 Curve Band
+000.00 Whiff Specs
+000.00 No-Aim Scope
+000.00 Lockon Specs
+000.00 Munch Belt
+000.00 Pass Scarf
+000.00 Weather Band
+000.00 Friend Bow
+000.00 Beauty Scarf
+000.00 Sun Ribbon
+000.00 Lunar Ribbon
+000.00 Ring D
+000.00 Ring E
+000.00 Ring F
+000.00 Heal Seed		Berries and Seeds (elixirs - zinc are categorized as seeds and berries)
+000.00 Wish Stone
+000.00 Oran Berry
+000.00 Sitrus Berry
+000.00 Eyedrop Seed
+000.00 Reviver Seed
+000.00 Blinker Seed
+000.00 Doom Seed
+000.00 Allure Seed
+000.00 Life Seed
+000.00 Rawst Berry
+000.00 Hunger Seed
+000.00 Quick Seed
+000.00 Pecha Berry
+000.00 Cheri Berry
+000.00 Totter Seed
+000.00 Sleep Seed
+000.00 Plain Seed
+000.00 Warp Seed
+000.00 Blast Seed
+000.00 Ginseng
+000.00 Joy Seed
+000.00 Chesto Berry
+000.00 Stun Seed
+000.00 Max Elixir
+000.00 Protein
+000.00 Calcium
+000.00 Iron
+000.00 Zinc
+000.00 Apple			Food and Gummis
+000.00 Big Apple
+000.00 Grimy Food
+000.00 Huge Apple
+000.00 White Gummi
+000.00 Red Gummi
+000.00 Blue Gummi
+000.00 Grass Gummi
+000.00 Yellow Gummi
+000.00 Clear Gummi
+000.00 Orange Gummi
+000.00 Pink Gummi
+000.00 Brown Gummi
+000.00 Sky Gummi
+000.00 Gold Gummi
+000.00 Green Gummi
+000.00 Gray Gummi
+000.00 Purple Gummi
+000.00 Royal Gummi
+000.00 Black Gummi
+000.00 Silver Gummi
+000.00 Banana
+000.00 Chestnut
+000.00 POKé			Money (set this to 100.00 if the money category is nonzero)
+000.00 Upgrade			Misc
+000.00 King's Rock
+000.00 Thunderstone
+000.00 Deepseascale
+000.00 Deepseatooth
+000.00 Sun Stone
+000.00 Moon Stone
+000.00 Fire Stone
+000.00 Water Stone
+000.00 Metal Coat
+000.00 Leaf Stone
+000.00 Dragon Scale
+000.00 Link Cable
+000.00 Ice Part
+000.00 Steel Part
+000.00 Rock Part
+000.00 Music Box
+000.00 Key
+000.00 Used TM			Used TM
+000.00 Focus Punch		TMs and Orbs (TMs and Orbs are separate categories, but they're mixed in the list)
+000.00 Dragon Claw
+000.00 Water Pulse
+000.00 Calm Mind
+000.00 Roar
+000.00 Toxic
+000.00 Hail Orb
+000.00 Bulk Up
+000.00 Bullet Seed
+000.00 Hidden Power
+000.00 Sunny Orb
+000.00 Taunt
+000.00 Ice Beam
+000.00 Blizzard
+000.00 Hyper Beam
+000.00 Light Screen
+000.00 Protect
+000.00 Rainy Orb
+000.00 Giga Drain
+000.00 Safeguard
+000.00 Frustration
+000.00 Solarbeam
+000.00 Iron Tail
+000.00 Thunderbolt
+000.00 Thunder
+000.00 Earthquake
+000.00 Return
+000.00 Dig
+000.00 Psychic
+000.00 Shadow Ball
+000.00 Brick Break
+000.00 Evasion Orb
+000.00 Reflect
+000.00 Shock Wave
+000.00 Flamethrower
+000.00 Sludge Bomb
+000.00 Sandy Orb
+000.00 Fire Blast
+000.00 Rocky Orb
+000.00 Aerial Ace
+000.00 Torment
+000.00 Facade
+000.00 Secret Power
+000.00 Rest
+000.00 Attract
+000.00 Thief
+000.00 Steel Wing
+000.00 Skill Swap
+000.00 Snatch Orb
+000.00 Overheat
+000.00 Wide Slash
+000.00 Excavate
+000.00 Spin Slash
+000.00 See-Trap Orb
+000.00 Mug Orb
+000.00 Rebound Orb
+000.00 Lob Orb
+000.00 Switcher Orb
+000.00 Blowback Orb
+000.00 Warp Orb
+000.00 Transfer Orb
+000.00 Slow Orb
+000.00 Quick Orb
+000.00 Luminous Orb
+000.00 Petrify Orb
+000.00 Stayaway Orb
+000.00 Pounce Orb
+000.00 Trawl Orb
+000.00 Cleanse Orb
+000.00 Observer Orb
+000.00 Decoy Orb
+000.00 Slumber Orb
+000.00 Totter Orb
+000.00 Two-Edge Orb
+000.00 Silence Orb
+000.00 Escape Orb
+000.00 Scanner Orb
+000.00 Radar Orb
+000.00 Drought Orb
+000.00 Trapbust Orb
+000.00 Rollcall Orb
+000.00 Invisify Orb
+000.00 One-Shot Orb
+000.00 Identify Orb
+000.00 Vacuum-Cut
+000.00 Reviver Orb
+000.00 Shocker Orb
+000.00 Sizebust Orb
+000.00 One-Room Orb
+000.00 Fill-In Orb
+000.00 Trapper Orb
+000.00 Possess Orb
+000.00 Itemizer Orb
+000.00 Hurl Orb
+000.00 Mobile Orb
+000.00 Toss Orb
+000.00 Stairs Orb
+000.00 Longtoss Orb
+000.00 Pierce Orb
+000.00 Cut			what category are these? tms? machines?
+000.00 Fly
+000.00 Surf
+000.00 Strength
+000.00 Flash
+000.00 Rock Smash
+000.00 Waterfall
+000.00 Dive
+000.00 Link Box			Machines
+000.00 Switch Box
+000.00 Weavile Fig
+000.00 Mime Jr. Fig
+000.00 Beatup Orb
+000.00 G Machine 6
+000.00 G Machine 7
+000.00 G Machine 8
