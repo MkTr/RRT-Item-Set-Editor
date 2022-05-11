@@ -1,3 +1,4 @@
+//v0.1
 //made by Cipnit with help from Nahnegnal
 //code requires C++11
 
@@ -15,22 +16,27 @@ using namespace std;
 bool SetOffsets(ifstream* ROMOffsets);
 
 int ConvertListToBin(string listfilename);
-int ConvertListToInsertInROM(fstream* RRTROM, ifstream* DefaultItemSetList, string listfilename, unsigned char itemsetID);
-int CreateItemSetBinaryData(ifstream* ItemSetList, vector<unsigned char>* ItemSetBin);
-int CheckForAdditionalListWarnings(ifstream* ItemSetList);
+int ConvertListToInsertInROM(fstream* RRTROM, string listfilename, unsigned char itemsetID);
+int CreateItemSetBinaryData(ifstream* ItemSetList, vector<unsigned char>* ItemSetBin, string& ErrorMessages);
 
 int ConvertBinToList(string binfilename, ifstream* DefaultItemSetList);
 int ConvertBinFromROMToList(fstream* RRTROM, ifstream* DefaultItemSetList, unsigned char itemsetID);
 int ExtractItemSetBinaryData(fstream* ItemSetBin, ofstream* OutputItemSetList, ifstream* DefaultItemSetList);
 
-int GetDungeonItemSets(fstream* RRTROM, unsigned char dungID);
+unsigned char GetDungeonID(fstream* RRTROM, string& arguing);
+int GetDungeonItemSets(fstream* RRTROM, unsigned char dungID, string dungName);
 unsigned int seekROMToItemSetAddress(fstream* RRTROM, unsigned char itemsetID);
-int getBinItemSetSize(fstream* ItemSetBin, ifstream* DefaultItemSetList, int& testeroni);
+int getBinItemSetSize(fstream* ItemSetBin);
+int updateCurrentCategory(int currententry);
 
 
-int _ItemSetPointerTable;			//US: 4CB56C
-int _DungeonFloorDataPointerTable;	//US: 4A9E74
-int _DungeonSizes;					//US: 1077A8
+int _ItemSetPointerTable;
+int _DungeonFloorDataPointerTable;
+int _DungeonSizes;
+int _DungeonNamesPointerTable;
+int _HighestDungeonID;
+#define _MaxItemSetEntries 252 //NOTE: If you want to change the amount of items and categories, you'll have
+#define _MaxCategories 12	   //to change a lot more than just these definitions.
 
 
 
@@ -40,6 +46,7 @@ int main(int argc, char *argv[])
 	fstream RRTROM;
 	ifstream DefaultItemSetList("DEFAULT_ITEMSET_LIST.txt");
 	ifstream ROMOffsets("offsets.txt");
+	cout << endl;
 
 	if(DefaultItemSetList.fail())
 	{
@@ -102,15 +109,23 @@ int main(int argc, char *argv[])
 			cout << "ERROR: ROM could not be opened" << endl;
 			return 0;
 		}
+
 		if(arguments[1] == "getdungeonsets")
 		{
 			if(arguments[2].size() == 0)
 			{
-				cout << "ERROR: dungeon ID not specified" << endl;
+				cout << "ERROR: dungeon not specified" << endl;
 				return 0;
 			}
-			unsigned char dungID = stoi(arguments[2],nullptr,16);
-			int result = GetDungeonItemSets(&RRTROM,dungID); 									//.exe "romname.gba" getdungeonsets 00
+
+			unsigned char dungID = GetDungeonID(&RRTROM,arguments[2]);
+			if(dungID == 0xFF)
+			{
+				cout << "ERROR: invalid dungeon name/ID" << endl;
+				return 0;
+			}
+
+			int result = GetDungeonItemSets(&RRTROM,dungID,arguments[2]);						//.exe "romname.gba" getdungeonsets 00
 			switch(result)
 			{
 			case -1:
@@ -148,16 +163,11 @@ int main(int argc, char *argv[])
 				cout << "ERROR: item set list not specified" << endl;
 				return 0;
 			}
-			if(arguments[0] == arguments[2])
-			{
-				cout << "ERROR: please name your ROM something other than Output.gba" << endl;
-				return 0;
-			}
 
 			if(arguments[3].size() != 0)
 			{
 				unsigned char itemsetID = stoi(arguments[3],nullptr,16);
-				ConvertListToInsertInROM(&RRTROM, &DefaultItemSetList, arguments[2], itemsetID);						//.exe "romname.gba" insert "itemsetlist.txt" 00
+				ConvertListToInsertInROM(&RRTROM, arguments[2], itemsetID);//.exe "romname.gba" insert "itemsetlist.txt" 00
 			}
 			else
 			{
@@ -181,7 +191,6 @@ int main(int argc, char *argv[])
 }
 
 
-
 bool SetOffsets(ifstream* ROMOffsets)
 {
 	string currentline;
@@ -194,6 +203,12 @@ bool SetOffsets(ifstream* ROMOffsets)
 	getline(*ROMOffsets,currentline); if(ROMOffsets->fail()) return false;
 	getline(*ROMOffsets,currentline,' '); if(ROMOffsets->fail()) return false;
 	_DungeonSizes = stoi(currentline,nullptr,16);
+	getline(*ROMOffsets,currentline); if(ROMOffsets->fail()) return false;
+	getline(*ROMOffsets,currentline,' '); if(ROMOffsets->fail()) return false;
+	_DungeonNamesPointerTable = stoi(currentline,nullptr,16);
+	getline(*ROMOffsets,currentline); if(ROMOffsets->fail()) return false;
+	getline(*ROMOffsets,currentline,' '); if(ROMOffsets->fail()) return false;
+	_HighestDungeonID = stoi(currentline,nullptr,16);
 
 	return true;
 }
@@ -205,13 +220,13 @@ bool SetOffsets(ifstream* ROMOffsets)
 int ConvertListToBin(string listfilename)
 {
 	ifstream ItemSetList(listfilename);
-	ofstream output("Output.bin");
+	ofstream output("Output.bin", ios::binary);//SUPER IMPORTANT LESSON: ALWAYS HAVE ios::binary WHEN YOU'RE DEALING WITH BINARY FILES. I spent a half an hour trying to figure out why output.bin's contents were different than the ItemSetBin vector's (after spending a couple hours trying to figure out what was wrong with the code in CreateItemSetBinaryData), and finally discovered that a 0D byte was being put before every single 0A byte. This is because 0A is a newline byte, and windows newlines in plain text need 0D 0A, so c++ automatically puts the 0D before every incoming 0A byte when the fstream isn't in binary mode.
 	vector<unsigned char> ItemSetBin;
 
 	if(output.fail())
 	{
 		cout << "ERROR: output file could not be created" << endl;
-		return -4;
+		return -1;
 	}
 	if(ItemSetList.fail())
 	{
@@ -219,8 +234,8 @@ int ConvertListToBin(string listfilename)
 		return -1;
 	}
 
-	int result = CreateItemSetBinaryData(&ItemSetList, &ItemSetBin);
-	if(result >= 0) CheckForAdditionalListWarnings(&ItemSetList);
+	string ErrorMassage;
+	int result = CreateItemSetBinaryData(&ItemSetList, &ItemSetBin, ErrorMassage);
 
 	if(result == -1)
 	{
@@ -229,13 +244,13 @@ int ConvertListToBin(string listfilename)
 	}
 	if(result == -2)
 	{
-		cout << "ERROR: category percentages do not equal 100.00" << endl;
-		return -2;
+		cout << "ERROR: category percentages do not equal 100%" << endl;
+		return -1;
 	}
 	if(result == -3)
 	{
-		cout << "ERROR: item percentages in a category do not add up to 100.00" << endl;
-		return -3;
+		cout << ErrorMassage;
+		return -1;
 	}
 
 	for(vector<unsigned char>::iterator current = ItemSetBin.begin(); current != ItemSetBin.end(); ++current)
@@ -246,7 +261,7 @@ int ConvertListToBin(string listfilename)
 	return 0;
 }
 
-int ConvertListToInsertInROM(fstream* RRTROM, ifstream* DefaultItemSetList, string listfilename, unsigned char itemsetID)
+int ConvertListToInsertInROM(fstream* RRTROM, string listfilename, unsigned char itemsetID)
 {
 	ifstream ItemSetList(listfilename);
 	vector<unsigned char> ItemSetBin;
@@ -254,11 +269,11 @@ int ConvertListToInsertInROM(fstream* RRTROM, ifstream* DefaultItemSetList, stri
 	if(ItemSetList.fail())
 	{
 		cout << "ERROR: item set list could not be opened" << endl;
-		return -5;
+		return -1;
 	}
 
-	int result = CreateItemSetBinaryData(&ItemSetList, &ItemSetBin);
-	if(result >= 0) CheckForAdditionalListWarnings(&ItemSetList);
+	string ErrorMassage;
+	int result = CreateItemSetBinaryData(&ItemSetList, &ItemSetBin, ErrorMassage);
 
 	if(result == -1)
 	{
@@ -267,24 +282,23 @@ int ConvertListToInsertInROM(fstream* RRTROM, ifstream* DefaultItemSetList, stri
 	}
 	if(result == -2)
 	{
-		cout << "ERROR: category percentages do not equal 100.00" << endl;
-		return -2;
+		cout << "ERROR: category percentages do not equal 100%" << endl;
+		return -1;
 	}
 	if(result == -3)
 	{
-		cout << "ERROR: item percentages in a category do not add up to 100.00" << endl;
-		return -3;
+		cout << ErrorMassage;
+		return -1;
 	}
 
 
 	unsigned int itemsetadres = seekROMToItemSetAddress(RRTROM, itemsetID);
-	if(itemsetadres == 0) {cout << "ERROR: invalid ROM" << endl; return -6;}
-	if(itemsetadres == 0xFFFFFFFF) {cout << "ERROR: item set ID invalid (pointer to item set does not exist)" << endl; return -7;}
+	if(itemsetadres == 0) {cout << "ERROR: invalid ROM" << endl; return -1;}
+	if(itemsetadres == 0xFFFFFFFF) {cout << "ERROR: item set ID invalid (pointer to item set does not exist)" << endl; return -1;}
 
-	int testeroni = 0;
-	result = getBinItemSetSize(RRTROM, DefaultItemSetList, testeroni);
-	if(result == -1) {cout << "ERROR: invalid item ID (item set to replace is too large, implying non-itemset data was being read during its size test)" << endl; return -7;}
-	if(result == -2) {cout << "ERROR: invalid ROM" << endl; return -6;}
+	result = getBinItemSetSize(RRTROM);
+	if(result == -1) {cout << "ERROR: invalid item ID (item set to replace is too large, implying non-itemset data was being read during its size test)" << endl; return -1;}
+	if(result == -2) {cout << "ERROR: invalid ROM" << endl; return -1;}
 
 	if((ItemSetBin.size() % 2 == 1) || (result % 2 == 1))
 	{
@@ -296,13 +310,13 @@ int ConvertListToInsertInROM(fstream* RRTROM, ifstream* DefaultItemSetList, stri
 
 	if((int)ItemSetBin.size() > result)
 	{
-		cout << "ERROR: Your item set's size is too large to be put in place of item set " << itemsetID << endl;
+		cout << "ERROR: Your item set's size is too large to be put in place of item set " << (int)itemsetID << endl;
 		cout << "Size of your item set: " << ItemSetBin.size() << endl;
 		cout << "Size of item set " << (int)itemsetID << ": " << result << endl;
 		cout << "Read the instructions for tips on how to lower the size of your item set." << endl;
 		cout << "Alternatively, you can use [rawdata create] to create the binary of your list, use a hex editor to put that binary in empty space in the ROM (0x280000-0x300000 area US), and then repoint an item set's pointer to the location of your new item set." << endl;
-		cout << "Location of pointer to item set " << (int)itemsetID << ": " << hex << (_ItemSetPointerTable +(itemsetID*4)) << endl;
-		return -8;
+		cout << "Location of pointer to item set " << hex << (int)itemsetID << ": " << (_ItemSetPointerTable +(itemsetID*4)) << endl;
+		return -1;
 	}
 
 	while((int)ItemSetBin.size() < result)
@@ -323,138 +337,131 @@ int ConvertListToInsertInROM(fstream* RRTROM, ifstream* DefaultItemSetList, stri
 	return 0;
 }
 
-int CreateItemSetBinaryData(ifstream* ItemSetList, vector<unsigned char>* ItemSetBin)
+int CreateItemSetBinaryData(ifstream* ItemSetList, vector<unsigned char>* ItemSetBin, string& ErrorMessages)
 {
-	int totalpercentage = 0;
-	int totalORBpercentage = 0;
-	int skippedlines = 0;
-	bool categoriesdone = false;
-	bool orbsdone = false;
+	bool runescape = false;
+	int currententry = 0;
 	int currentcategory = 0;
-	int totalcategories = 0;
+	int skippedentries = 0;
+	int totalcategorypercents = 0;
+	bool nonzerocategories[_MaxCategories] = {0};
+	int itemperecnts[_MaxCategories] = {0};
 
-	while(1)
+	while((currententry < _MaxItemSetEntries) && !runescape)
 	{
 		string aline;
 		string numbstr;
-		int numb;
-		unsigned char byte1;
-		unsigned char byte2;
-		bool thisanorb = false;
-
-		if((totalORBpercentage == 10000) && (!orbsdone)) //I had to separate orbs from the other categories because they're mixed in with TMs. The correct thing to do is have a separate variable to keep track of every single category's percentage, but I didn't want to rewrite all my code - though I'll need to if it turns out other item categories are mixed with each other. (The only way to notice this is if you extract an item set from the game and notice items in a category don't add up to 100% or have negative values).
-		{
-			orbsdone = true;
-			if((currentcategory+orbsdone) == totalcategories) return 0;
-		}
-		if(totalpercentage == 10000)
-		{
-			if(!categoriesdone) //The first time the set reaches 100%, that means the category chances are done.
-			{
-				totalpercentage = 0;
-				categoriesdone = true;
-			}
-			else				//Every time after that means the items in a category have been completed (assuming items are grouped based on their category, except for orbs).
-			{
-				totalpercentage = 0;
-				++currentcategory;
-			}
-
-			if( (currentcategory+orbsdone) == totalcategories ) return 0;
-		}
+		int numb = 0;
+		unsigned char byte1 = 0;
+		unsigned char byte2 = 0;
 
 		getline(*ItemSetList,aline);
-
-		if((totalpercentage > 10000) || ItemSetList->eof())
-		{
-			if(!categoriesdone) return -2;
-			else return -3;
-		}
-		if(totalORBpercentage > 10000) return -3;
-		if(aline.empty()) return -1;
-
-		if(string().assign(aline,7,7) == "Nothing" && !categoriesdone)	//I use the Nothing item to check for errors in the user's list: by now, if categories haven't been completed, or if they have and they're over 100%, there's a problem.
-		{
-			if(!categoriesdone) return -2;
-			if(totalpercentage > 0) return -2;
-			if(currentcategory > 0) return -2;
-		}
-
-		if(string().assign(aline,aline.size()-3,3) == "Orb") thisanorb = true; //This is why items in the orbs category NEED to end with "orb" in default_itemset_list. I actually can't get over the fact that orbs and TMs are mixed together like how does that even work in the game's code why does it exist just to spite me
-
+		if(ItemSetList->fail()) return -1;
 		numbstr.assign(aline,0,3);
 		numbstr.append(string(aline,4,2));
-		if(numbstr.size() != 5) return -1;
-		numb = stoi(numbstr,nullptr); //numb = percentage * 100
+		if(numbstr.size() != 5) runescape = true;
+		else numb = stoi(numbstr,nullptr); //numb = percentage * 100
 
-		if(numb == 0) ++skippedlines;
+		if(numb == 0) ++skippedentries;
 		else
 		{
-			if(!categoriesdone) ++totalcategories;
-			if(skippedlines > 0)
-			{	//Inserting the "skip to line" command in the item set before continuing
+			if(skippedentries > 0)
+			{
 				int halfword = 0x7530;
-				halfword += skippedlines;
+				halfword += skippedentries;
 				if(halfword >= 0x10000) return -1;
 				byte1 = halfword & 0xFF;
 				byte2 = (halfword & 0xFF00) >> 8;
 				ItemSetBin->push_back(byte1);
 				ItemSetBin->push_back(byte2);
-				skippedlines = 0;
+				skippedentries = 0;
 			}
-			if(thisanorb)
+
+			if(currententry < _MaxCategories)
 			{
-				totalORBpercentage += numb;
-				byte1 = totalORBpercentage & 0xFF;
-				byte2 = (totalORBpercentage & 0xFF00) >> 8;
+				totalcategorypercents += numb;
+				nonzerocategories[currententry] = true;
+				byte1 = totalcategorypercents & 0xFF;
+				byte2 = (totalcategorypercents & 0xFF00) >> 8;
 			}
 			else
 			{
-				totalpercentage += numb;
-				byte1 = totalpercentage & 0xFF;
-				byte2 = (totalpercentage & 0xFF00) >> 8;
+				int actualcurrentcategory = currentcategory;
+				if(string().assign(aline,aline.size()-3,3) == "Orb") actualcurrentcategory = 9;//Orbs
+				if(currententry == 12) actualcurrentcategory = 2;//Nothing exception
+				if(currententry == 66) actualcurrentcategory = 8;//Wish Stone exception
+				itemperecnts[actualcurrentcategory] += numb;
+				byte1 = itemperecnts[actualcurrentcategory] & 0xFF;
+				byte2 = (itemperecnts[actualcurrentcategory] & 0xFF00) >> 8;
 			}
 			ItemSetBin->push_back(byte1);
 			ItemSetBin->push_back(byte2);
 		}
+
+		++currententry;
+		currentcategory = updateCurrentCategory(currententry);
 	}
 
-	return -1;
-}
-
-int CheckForAdditionalListWarnings(ifstream* ItemSetList)
-{
-	int itemsmissed = 0;
-	string misseditem;
-
-	while(!ItemSetList->eof())
+	if(skippedentries > 0)
 	{
-		string aline;
-		getline(*ItemSetList,aline);
-		if(!aline.empty())
+		unsigned char byte1 = 0;
+		unsigned char byte2 = 0;
+		int halfword = 0x7530;
+		halfword += skippedentries;
+		if(halfword >= 0x10000) return -1;
+		byte1 = halfword & 0xFF;
+		byte2 = (halfword & 0xFF00) >> 8;
+		ItemSetBin->push_back(byte1);
+		ItemSetBin->push_back(byte2);
+		skippedentries = 0;
+	}
+
+
+	if(totalcategorypercents != 10000) return -2;
+
+	for(int checkerrors = 0; checkerrors < _MaxCategories; ++checkerrors)
+	{
+		string catname;
+		switch(checkerrors)
 		{
-			if( (string().assign(aline,0,3) != "000") || (string(aline,4,2) != "00") )
+		case  0: catname =  "Throwables"; break;
+		case  1: catname =  "Rocks"; break;
+		case  2: catname =  "Berries + Seeds"; break;
+		case  3: catname =  "Food + Gummis"; break;
+		case  4: catname =  "Hold Items"; break;
+		case  5: catname =  "TMs"; break;
+		case  6: catname =  "Money"; break;
+		case  7: catname =  "Unused"; break;
+		case  8: catname =  "Misc"; break;
+		case  9: catname =  "Orbs"; break;
+		case 10: catname =  "Machines"; break;
+		case 11: catname =  "Used TM"; break;
+		default: break;
+		}
+
+		if(nonzerocategories[checkerrors] == true)
+		{
+			if(itemperecnts[checkerrors] != 10000)
 			{
-				++itemsmissed;
-				if(itemsmissed == 1) misseditem = string().assign(aline,7,aline.size()-7);
+				int hundrids = itemperecnts[checkerrors]/100;
+				string overone = to_string(hundrids);
+				string underone = to_string(itemperecnts[checkerrors] - (hundrids*100));
+				ErrorMessages.append("ERROR: Items in " + catname + " category do not add up to 100% - they add up to " + overone + "." + underone + '\n');
+			}
+		}
+		else
+		{
+			if(itemperecnts[checkerrors] != 0)
+			{
+				ErrorMessages.append("ERROR: Items in the " + catname + " category exist, but the " + catname + " category is 0%." + '\n');
 			}
 		}
 	}
-
-	if(itemsmissed > 0)
-	{
-		int tabremover = 0;
-		tabremover = misseditem.find('\t');
-		if(tabremover > 0) misseditem.resize(tabremover);
-		cout << "WARNING: Item set was created, but ";
-		cout << misseditem;
-		if(itemsmissed > 1) cout << " and items beyond it were ";
-		else cout << " was ";
-		cout << "ignored, as 100% probability was already reached in all categories before " << misseditem << " was read." << endl;
-	}
+	if(!ErrorMessages.empty()) return -3;
 
 	return 0;
 }
+
 
 
 
@@ -466,12 +473,12 @@ int ConvertBinToList(string binfilename, ifstream* DefaultItemSetList)
 	if(output.fail())
 	{
 		cout << "ERROR: output file could not be created" << endl;
-		return -3;
+		return -1;
 	}
 	if(ItemSetBin.fail())
 	{
 		cout << "ERROR: item set binary file could not be opened" << endl;
-		return -4;
+		return -1;
 	}
 
 	int result = ExtractItemSetBinaryData(&ItemSetBin, &output, DefaultItemSetList);
@@ -479,12 +486,12 @@ int ConvertBinToList(string binfilename, ifstream* DefaultItemSetList)
 	switch(result)
 	{
 	case -1:
-		cout << "ERROR: category percentages do not equal 100.00, item set is invalid and Output.txt may be incomplete" << endl;
+		cout << "ERROR: item set is invalid, Output.txt may be incomplete" << endl;
 		return -1;
 		break;
 	case -2:
-		cout << "ERROR: item percentages in a category do not equal 100.00, item set is invalid and Output.txt may be incomplete" << endl;
-		return -2;
+		cout << "ERROR: either the item set is invalid or DEFAULT_ITEMSET_LIST was edited, Output.txt may be incomplete" << endl;
+		return -1;
 		break;
 	default:
 		cout << "Successfully created item set list - see Output.txt" << endl;
@@ -499,7 +506,7 @@ int ConvertBinFromROMToList(fstream* RRTROM, ifstream* DefaultItemSetList, unsig
 	if(output.fail())
 	{
 		cout << "ERROR: output file could not be created" << endl;
-		return -3;
+		return -1;
 	}
 
 	unsigned int itemsetadres = seekROMToItemSetAddress(RRTROM, itemsetID);
@@ -511,12 +518,12 @@ int ConvertBinFromROMToList(fstream* RRTROM, ifstream* DefaultItemSetList, unsig
 	switch(result)
 	{
 	case -1:
-		cout << "ERROR: category percentages do not equal 100.00, item set is invalid and Output.txt may be incomplete" << endl;
+		cout << "ERROR: item set is invalid, Output.txt may be incomplete" << endl;
 		return -1;
 		break;
 	case -2:
-		cout << "ERROR: item percentages in a category do not equal 100.00, item set is invalid and Output.txt may be incomplete" << endl;
-		return -2;
+		cout << "ERROR: either the item set is invalid or DEFAULT_ITEMSET_LIST was edited, Output.txt may be incomplete" << endl;
+		return -1;
 		break;
 	default:
 		cout << "Successfully created item set list - see Output.txt" << endl;
@@ -528,20 +535,16 @@ int ConvertBinFromROMToList(fstream* RRTROM, ifstream* DefaultItemSetList, unsig
 
 int ExtractItemSetBinaryData(fstream* ItemSetBin, ofstream* OutputItemSetList, ifstream* DefaultItemSetList)
 {
-	int lastpercentage = 0;
-	int lastORBpercentage = 0;
-	bool categoriesdone = false;
-	int totalcategories = 0;
+	int currententry = 0;
 	int currentcategory = 0;
-	bool orbsdone = false;
-	bool itemsdone = false;
-	bool warningraised = false;
+	int totalcategorypercents = 0;
+	int itemperecnts[_MaxCategories] = {0};
 
-	while(!ItemSetBin->eof() && !itemsdone)
+	while(currententry < _MaxItemSetEntries)
 	{
 		unsigned char byte1 = ItemSetBin->get();
 		unsigned char byte2 = ItemSetBin->get();
-		if(ItemSetBin->fail()) return (categoriesdone ? -2 : -1);
+		if(ItemSetBin->fail()) return -1;
 		int numb = byte1 + (byte2 * 0x100);
 
 		if(numb >= 0x7530)
@@ -551,51 +554,39 @@ int ExtractItemSetBinaryData(fstream* ItemSetBin, ofstream* OutputItemSetList, i
 			{
 				string theline;
 				getline(*DefaultItemSetList,theline);
-				if(DefaultItemSetList->eof())
-				{
-					if(!categoriesdone) return -1;
-					return -2;
-				}
-				if(theline.size() != 0)
-				{
-					if(string().assign(theline,7,7) == "Nothing")
-					{
-						if(!categoriesdone) return -1;
-						if(lastpercentage > 0) return -1;
-						if(currentcategory > 0) return -1;
-					}
-					*OutputItemSetList << theline << endl;
-				}
+				if(DefaultItemSetList->fail()) return -2;
+				if(theline.size() != 0) *OutputItemSetList << theline << endl;
 				--numb;
+				++currententry;
+				currentcategory = updateCurrentCategory(currententry);
 			}
 		}
 		else
 		{
-			if(!categoriesdone) ++totalcategories;
 			string theline;
 			string therestoftheline;
+			int actualpercent = 0;
+			int actualcategory = currentcategory;
 			getline(*DefaultItemSetList,theline);
-			if(DefaultItemSetList->eof() || theline.empty())
+			if(DefaultItemSetList->eof() || theline.empty()) return -2;
+			if(currententry < _MaxCategories)
 			{
-				if(!categoriesdone) return -1;
-				return -2;
-			}
-			int actualpercent;
-			if(string().assign(theline,theline.size()-3,3) == "Orb")
-			{
-				actualpercent = numb -lastORBpercentage;
-				lastORBpercentage += actualpercent;
+				actualpercent = numb - totalcategorypercents;
+				totalcategorypercents = numb;
 			}
 			else
 			{
-				actualpercent = numb -lastpercentage;
-				lastpercentage += actualpercent;
+				if(string().assign(theline,theline.size()-3,3) == "Orb") actualcategory = 9;
+				if(currententry == 12) actualcategory = 2;//Nothing exception
+				if(currententry == 66) actualcategory = 8;//Wish Stone exception
+				actualpercent = numb - itemperecnts[actualcategory];
+				itemperecnts[actualcategory] = numb;
 			}
 			if(actualpercent == 0)
 			{
-				if(categoriesdone) cout << "WARNING: An item included in the set has a percentage of 0???" << endl;
-				else cout << "WARNING: A category included in the set has a percentage of 0???" << endl;
+				cout << "WARNING: Item set entry " << dec << currententry << " is included in the set, but has a 0% chance to be picked???" << endl;
 			}
+
 			int percentwithoutdecimals = actualpercent/100;
 			int percentsdecimals = actualpercent -(percentwithoutdecimals*100);
 			therestoftheline.assign(theline,6,theline.size()-6);
@@ -609,69 +600,92 @@ int ExtractItemSetBinaryData(fstream* ItemSetBin, ofstream* OutputItemSetList, i
 			theline.append( to_string(percentsdecimals) );
 			theline.append(therestoftheline);
 			*OutputItemSetList << theline << endl;
-			if(string().assign(theline,7,7) == "Nothing")
-			{
-				if(!categoriesdone) return -1;
-				if(lastpercentage > 0) return -1;
-				if(currentcategory > 0) return -1;
-			}
-		}
 
-		if((lastpercentage > 10000) && !warningraised)
-		{
-			if(!categoriesdone) cout << "WARNING: somehow, category percentages are OVER 100" << endl;
-			else cout << "WARNING: somehow, item percentages in a category are OVER 100" << endl;
-			warningraised = true;
+			++currententry;
+			currentcategory = updateCurrentCategory(currententry);
 		}
-		if((lastORBpercentage > 10000) && !warningraised)
-		{
-			cout << "WARNING: somehow, orb percentages are OVER 100" << endl;
-			warningraised = true;
-		}
-
-		if((lastORBpercentage >= 10000) && (!orbsdone))
-		{
-			orbsdone = true;
-			if((currentcategory+orbsdone) == totalcategories) itemsdone = true;
-		}
-
-		if(lastpercentage >= 10000)
-		{
-			if(!categoriesdone)
-			{
-				categoriesdone = true;
-				warningraised = false;
-				lastpercentage = 0;
-			}
-			else
-			{
-				lastpercentage = 0;
-				++currentcategory;
-				if((currentcategory+orbsdone) == totalcategories) itemsdone = true;
-			}
-		}
-
-		if(itemsdone)
-		{
-			while(!DefaultItemSetList->eof())
-			{
-				string theline;
-				getline(*DefaultItemSetList,theline);
-				if(theline.size() != 0) *OutputItemSetList << theline << endl;
-			}
-		}
-
 	}
 
-	if(!categoriesdone) return -1;
-	if(!itemsdone) return -2;
+	while(!DefaultItemSetList->eof())
+	{
+		string theline;
+		getline(*DefaultItemSetList,theline);
+		if(theline.size() != 0) *OutputItemSetList << theline << endl;
+	}
+
+	if(currententry > _MaxItemSetEntries)
+	{
+		cout << "WARNING: Item set skips past entry " << dec << _MaxItemSetEntries << ", to " << currententry << ": item set is invalid, and an adjacent item set's data may be included in output." << endl;
+	}
+	if((totalcategorypercents != 0) && (totalcategorypercents != 10000)) cout << "WARNING: Categories do not add up to 0/100%, item set is invalid." << endl;
+	for(int checkerrors = 0; checkerrors < _MaxCategories; ++checkerrors)
+	{
+		string catname;
+		switch(checkerrors)
+		{
+		case  0: catname =  "Throwables"; break;
+		case  1: catname =  "Rocks"; break;
+		case  2: catname =  "Berries + Seeds"; break;
+		case  3: catname =  "Food + Gummis"; break;
+		case  4: catname =  "Hold Items"; break;
+		case  5: catname =  "TMs"; break;
+		case  6: catname =  "Money"; break;
+		case  7: catname =  "Unused"; break;
+		case  8: catname =  "Misc"; break;
+		case  9: catname =  "Orbs"; break;
+		case 10: catname =  "Machines"; break;
+		case 11: catname =  "Used TM"; break;
+		default: break;
+		}
+
+		if((itemperecnts[checkerrors] != 0) && (itemperecnts[checkerrors] != 10000))
+				cout << "WARNING: Items in category " << catname << "do not add up to 0/100%, item set is invalid." << endl;
+	}
+
 	return 0;
 }
 
 
 
 
-int GetDungeonItemSets(fstream* RRTROM, unsigned char dungID)
+unsigned char GetDungeonID(fstream* RRTROM, string& arguing)
+{
+	unsigned int dungID = 0xFF;
+	if(string().assign(arguing,0,2) == "ID") dungID = stoi(string().assign(arguing,2,arguing.size()-2),nullptr,16); //If the argument was an ID, then the function continues to find the dungeon's name
+
+	for(unsigned char currentID = 0; currentID <= _HighestDungeonID; ++currentID)
+	{
+		string currentDungName;
+		RRTROM->seekg(_DungeonNamesPointerTable +(currentID*8));
+		if(RRTROM->fail()) return 0xFF;
+		unsigned char UnprocessedAddress[4] = {0,0,0,0};
+		RRTROM->read((char*)&UnprocessedAddress, 4);
+		if(RRTROM->fail()) return 0xFF;
+		unsigned int dungnameadres = (UnprocessedAddress[3]*0x1000000) +(UnprocessedAddress[2]*0x10000) +(UnprocessedAddress[1]*0x100) +UnprocessedAddress[0];
+		if(dungnameadres < 0x08000000) return 0xFF;
+		dungnameadres -= 0x08000000;
+		RRTROM->seekg(dungnameadres);
+
+		getline(*RRTROM,currentDungName,(char)0);
+
+		if(dungID != 0xFF)
+		{
+			if(dungID == currentID)
+			{
+				arguing = currentDungName;
+				return currentID;
+			}
+		}
+		else
+		{
+			if(arguing == currentDungName) return currentID;
+		}
+	}
+
+	return 0xFF;
+}
+
+int GetDungeonItemSets(fstream* RRTROM, unsigned char dungID, string dungName)
 {
 	RRTROM->seekg(_DungeonSizes + dungID);
 	if(RRTROM->fail()) return -1;
@@ -686,10 +700,11 @@ int GetDungeonItemSets(fstream* RRTROM, unsigned char dungID)
 	if(dungflordatadres < 0x08000000) return -3;
 	dungflordatadres -= 0x08000000;
 	cout << "Retrieving the item set IDs used on each floor in a dungeon with ID " << hex << (int)dungID << endl;
+	cout << "Dungeon name: " << dungName << endl;
 	cout << "Dungeon floors: " << dec << (dungeonfloors - 1) << endl;
 	cout << "Dungeon Floor Data Offset: " << hex << dungflordatadres << endl;
 	cout << "(To manually change the item sets the floors use, go to the above offset in the ROM - see instructions for more details)" << endl;
-	cout << "(All item set IDs below are in hexadecimal, and in order of: main items - kecleon items - monster house items - hidden wall items)" << endl;
+	cout << "(All item set IDs are in hexadecimal, and in order of: main items - kecleon items - monster house items - hidden wall items)" << endl;
 
 	for(unsigned char curdungflor = 1; curdungflor < dungeonfloors; ++curdungflor)
 	{
@@ -709,7 +724,7 @@ int GetDungeonItemSets(fstream* RRTROM, unsigned char dungID)
 		RRTROM->seekg( dungflordatadres +(0x10*curdungflor) +0xC);
 		if(RRTROM->fail()) return -4;
 		readbyte4 = RRTROM->get();
-		cout << "F" << dec << (int)curdungflor << ": " << hex << (int)readbyte1 << " " << (int)readbyte2 << " " << (int)readbyte3 << " " << (int)readbyte4 << endl;
+		cout << "F" << dec << (int)curdungflor << "(" << hex << (int)curdungflor << ")" << ": " << (int)readbyte1 << " " << (int)readbyte2 << " " << (int)readbyte3 << " " << (int)readbyte4 << endl;
 	}
 
 	return 0;
@@ -733,34 +748,11 @@ unsigned int seekROMToItemSetAddress(fstream* RRTROM, unsigned char itemsetID)
 }
 
 
-int getBinItemSetSize(fstream* ItemSetBin, ifstream* DefaultItemSetList, int& testeroni)
+int getBinItemSetSize(fstream* ItemSetBin)
 {
 	bool donereading = false;
 	int isetsize = 0;
-	bool categoriesdone = false;
-	int nonzerocategories = 0;
-	int completedcategories = 0;
-	int MaximumCategories = 0;
-	int MaximumPossibleSize = 0;
 	int currententry = 0;
-	testeroni = 5555;
-
-	bool gettingmaximumcategories = true;
-	while(!DefaultItemSetList->eof())
-	{
-		string aline;
-		getline(*DefaultItemSetList,aline);
-
-		if(!aline.empty())
-		{
-			if(gettingmaximumcategories)
-			{
-				if(string().assign(aline,7,7) == "Nothing") gettingmaximumcategories = false;
-				else ++MaximumCategories;
-			}
-			MaximumPossibleSize += 2;
-		}
-	}
 
 	while(!donereading)
 	{
@@ -774,30 +766,15 @@ int getBinItemSetSize(fstream* ItemSetBin, ifstream* DefaultItemSetList, int& te
 			numb -= 0x7530;
 			currententry += numb;
 		}
-		else if(numb == 0x2710)
-		{
-			if(!categoriesdone)
-			{
-				categoriesdone = true;
-				++nonzerocategories;
-			}
-			else
-			{
-				++completedcategories;
-				if(completedcategories == nonzerocategories) donereading = true;
-			}
-			++currententry;
-		}
 		else
 		{
-			if(!categoriesdone) ++nonzerocategories;
 			++currententry;
 		}
 		isetsize += 2;
 
-		if(currententry >= MaximumCategories) categoriesdone = true;
-		if(currententry*2 >= MaximumPossibleSize) return -1;
-		if(isetsize > MaximumPossibleSize) return -1;
+		if(currententry == _MaxItemSetEntries) donereading = true;
+		if(currententry > _MaxItemSetEntries) return -1;
+		if(isetsize > _MaxItemSetEntries*2) return -1;
 	}
 
 	donereading = false;
@@ -805,18 +782,33 @@ int getBinItemSetSize(fstream* ItemSetBin, ifstream* DefaultItemSetList, int& te
 	{
 		unsigned char byte1 = ItemSetBin->get();
 		unsigned char byte2 = ItemSetBin->get();
-		if(ItemSetBin->fail()) return -2;
+		if(ItemSetBin->fail()) donereading = true;
 		int numb = byte1 + (byte2 * 0x100);
 
 		if(numb != 0) donereading = true;
 		else
 		{
 			isetsize += 2;
-			if(isetsize >= MaximumPossibleSize) donereading = true;
+			if(isetsize >= _MaxItemSetEntries*2) donereading = true;
 		}
 	}
 
 	return isetsize;
+}
+
+int updateCurrentCategory(int currententry)
+{
+	if((currententry >=  13) && (currententry <   19)) return  0;//Throwables
+	if((currententry >=  19) && (currententry <   21)) return  1;//Rocks
+	if((currententry >=  21) && (currententry <   65)) return  4;//Hold Items
+	if((currententry >=  65) && (currententry <   94)) return  2;//Berries + Seeds
+	if((currententry >=  94) && (currententry <  117)) return  3;//Food + Gummis
+	if((currententry >= 117) && (currententry <  118)) return  6;//Money
+	if((currententry >= 118) && (currententry <  136)) return  8;//Misc
+	if((currententry >= 136) && (currententry <  137)) return 11;//Used TM
+	if((currententry >= 137) && (currententry <  244)) return  5;//TMs and Orbs
+	if((currententry >= 244)) 						   return 10;//Machines
+	return 0;
 }
 
 

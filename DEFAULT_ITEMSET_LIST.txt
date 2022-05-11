@@ -1,16 +1,16 @@
 000.00 Throwables			Categories
 000.00 Rocks
-000.00 Berries + Seeds
-000.00 Food + Gummies
+000.00 Berries + Seeds (includes elixirs and vitimins)
+000.00 Food + Gummis
 000.00 Hold Items
 000.00 TMs
 000.00 Money (remember to set POKé chance to 100)
 000.00 Unused
-000.00 Misc (keys)
+000.00 Misc (evolution items, keys)
 000.00 Orbs
 000.00 Machines (link box, unused stuff)
-000.00 Used TM
-000.00 Nothing				Items
+000.00 Used TM (remember to set Used TM chance to 100)
+000.00 Nothing				Items	(The nothing item is in the berries+seeds category)
 000.00 Stick			Throwables
 000.00 Iron Thorn
 000.00 Silver Spike
@@ -63,8 +63,8 @@
 000.00 Ring D
 000.00 Ring E
 000.00 Ring F
-000.00 Heal Seed		Berries and Seeds (elixirs - zinc are categorized as seeds and berries)
-000.00 Wish Stone
+000.00 Heal Seed		Berries + Seeds
+000.00 Wish Stone		(the wish stone is in the misc category)
 000.00 Oran Berry
 000.00 Sitrus Berry
 000.00 Eyedrop Seed
@@ -92,7 +92,7 @@
 000.00 Calcium
 000.00 Iron
 000.00 Zinc
-000.00 Apple			Food and Gummis
+000.00 Apple			Food + Gummis
 000.00 Big Apple
 000.00 Grimy Food
 000.00 Huge Apple
@@ -136,7 +136,7 @@
 000.00 Key
 000.00 Used TM			Used TM
 000.00 Focus Punch		TMs and Orbs (TMs and Orbs are separate categories, but they're mixed in the list)
-000.00 Dragon Claw
+000.00 Dragon Claw		(there's also the beatup orb in the middle of machines)
 000.00 Water Pulse
 000.00 Calm Mind
 000.00 Roar
@@ -234,7 +234,7 @@
 000.00 Stairs Orb
 000.00 Longtoss Orb
 000.00 Pierce Orb
-000.00 Cut			what category are these? tms? machines?
+000.00 Cut
 000.00 Fly
 000.00 Surf
 000.00 Strength

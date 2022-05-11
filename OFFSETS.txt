@@ -2,3 +2,5 @@ US/Australia
 4CB56C - Item Set Pointer Table
 4A9E74 - Dungeon Floor Data Pointer Table
 1077A8 - Dungeon Sizes
+111A28 - Dungeon Names Pointer Table
+3F - Highest Dungeon ID
