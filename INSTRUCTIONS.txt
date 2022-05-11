@@ -22,9 +22,9 @@ To create an item set, copy DefaultItemSetList.txt (or use this tool to extract 
 -DO NOT add or remove text in the file. Certain words (specifically all items ending in "Orb") are crucial to the program's operation.
 -Make sure each line's number is five digits long with a period after the third digit (so 20% should be written as 020.00)
 -The total percentages of categories MUST equal 100%, and the total percentages of items within categories MUST ALSO equal 100%.
--Note that each nonzero chance in the item list will add 2 bytes to the size of item set data, and empty space between two nonzero lines will add 2 bytes. 
+-Note that each nonzero chance in the item list will add 2 bytes to the size of item set data, and empty space between two nonzero lines will add 2 bytes. If G Machine 8 wasn't edited, another 2-byte command is added to end the list.
 
-For example, if Rocks is 050.00, Hold Items is 050.00, Geo Pebble is 100.00, and Mobile Scarf (which is right beside Geo Pebble) is 100.00, then the item list data translated to english will be "Skip to Rocks, set to 50%, skip to Hold Items, set to 50%, skip to Geo Pebble, set to 100%, set next item to 100%, skip to entry 252" - 16 bytes long.
+For example, if Rocks is 050.00, Hold Items is 050.00, Geo Pebble is 100.00, and Mobile Scarf (which is right beside Geo Pebble) is 100.00, then the item set's data translated to english will be "Skip to Rocks, set to 50%, skip to Hold Items, set to 50%, skip to Geo Pebble, set to 100%, set next item to 100%, skip to entry 252" - 16 bytes long.
 
 
 

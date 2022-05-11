@@ -1,6 +1,6 @@
 000.00 Throwables			Categories
 000.00 Rocks
-000.00 Berries + Seeds (includes elixirs and vitimins)
+000.00 Berries + Seeds (includes max elixir and vitamins)
 000.00 Food + Gummis
 000.00 Hold Items
 000.00 TMs
