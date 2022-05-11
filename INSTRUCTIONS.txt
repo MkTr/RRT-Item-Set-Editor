@@ -14,7 +14,7 @@ OFFSETS.txt also shouldn't be touched, unless you want to change the program to 
 TO EASILY OPEN A COMMAND WINDOW: In the window of the directory RRT_itemsetter.exe is in, hold shift, and press the right mouse button on an empty space. In the context menu, you should see the option "Open command window here". This allows you to open a command window without having to find it in your start menu and using CD to navigate to the directory.
 
 
-Item sets are the pools RRT draws from when it needs to spawn items in a dungeon. To spawn an item, it first chooses one of the possible categories at random, then randomly chooses an item in that category.
+Item sets are the pools RRT draws from when it needs to spawn items in a dungeon. To spawn an item, it first chooses one of the set's categories at random, then randomly chooses an item in that category. 
 This tool can be used to extract an item set's binary data from the ROM and convert it into an editable plain text list, and convert a plain text list into binary data before putting it into the ROM.
 This tool also helps you find the IDs of item sets that the floors of dungeons use, but doesn't change them for you - instructions on how to change them yourself are at the end of this file.
 
@@ -22,7 +22,7 @@ To create an item set, copy DefaultItemSetList.txt (or use this tool to extract 
 -DO NOT add or remove text in the file. Certain words (specifically all items ending in "Orb") are crucial to the program's operation.
 -Make sure each line's number is five digits long with a period after the third digit (so 20% should be written as 020.00)
 -The total percentages of categories MUST equal 100%, and the total percentages of items within categories MUST ALSO equal 100%.
--Note that each nonzero chance in the item list will add 2 bytes to the size of item set data, and empty space between two nonzero lines will add 2 bytes. If G Machine 8 wasn't edited, another 2-byte command is added to end the list.
+-Note that each nonzero chance in the item list will add 2 bytes to the size of item set data, and empty space between two nonzero lines will add 2 bytes. If G Machine 8's chance is nonzero, another 2-byte command is added to end the list.
 
 For example, if Rocks is 050.00, Hold Items is 050.00, Geo Pebble is 100.00, and Mobile Scarf (which is right beside Geo Pebble) is 100.00, then the item set's data translated to english will be "Skip to Rocks, set to 50%, skip to Hold Items, set to 50%, skip to Geo Pebble, set to 100%, set next item to 100%, skip to entry 252" - 16 bytes long.
 
