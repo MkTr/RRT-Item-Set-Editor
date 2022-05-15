@@ -48,7 +48,7 @@ RRT_itemsetter.exe rawdata create "my item list.txt"
 
  rom "romname.gba"			Extract from or insert to a ROM - "romname.gba" should be replaced with your ROM's name. Must be followed by extract, getdungeonsets, or insert.
 
-  getdungeonsets "Dungeon Name"		Gives you the item sets each floor of a dungeon is using - replace "Dungeon Name" with the dungeon's exact spelling, including capital letters, in quotation marks. You can also search for a dungeon by its ID, using "ID00" in place of dungeon name (number must be hexadceimal without 0x). Note that the item set kecleon shops use is 1, the item set for monster houses is 2, and the item set for items hidden in walls is 3, in all dungeons other than late postgame dungeons. Read below on how you can manually change which item set a floor uses.
+  getdungeonsets "Dungeon Name"		Gives you the item set IDs each floor of a dungeon is using - replace "Dungeon Name" with the dungeon's exact spelling, including capital letters, in quotation marks. You can also search for a dungeon by its ID, using "ID00" in place of dungeon name (number must be hexadceimal without 0x). Note that the item set kecleon shops use is 1, the item set for monster houses is 2, and the item set for items hidden in walls is 3, in all dungeons other than late postgame dungeons. Read below on how you can manually change which item set a floor uses.
 
   extract 00				Extracts an item set from the ROM and converts it to a plain text file called "output.txt" - replace 00 with its ID (number must be hexadecimal without 0x). IF ITEMS IN A CATEGORY DO NOT ADD UP TO 100% OR IF YOU FIND NEGATIVE NUMBERS IN THE LIST, PLEASE TELL ME WHICH SET YOU FOUND THE BUG IN. 
 
@@ -60,4 +60,4 @@ RRT_itemsetter.exe rawdata create "my item list.txt"
 
 
 
-TO EDIT A FLOOR'S ITEM SETS: First, use the command getdungeonsets to get the offset to dungeon floor data. Each dungeon floor entry is 16 (0x10) bytes long, and the first entry is always blank (filled with zeroes): to get a floor data entry's address, convert the floor number to hexadecimal, multiply it by 0x10, and add it to the dungeon floor data offset. A floor data entry's address +6 is the item set it's using, +8 is the item set kecleon shops on that floor use, +0xA is the item set for monster houses on that floor, and +0xC is the item set for items living in the floor's walls. 
+TO EDIT WHICH ITEM SETS A FLOOR USES: First, use the command getdungeonsets to get the offset to dungeon floor data. Each dungeon floor entry is 16 (0x10) bytes long, and the first entry is always blank (filled with zeroes): to get a floor data entry's address, convert the floor number to hexadecimal, multiply it by 0x10, and add it to the dungeon floor data offset. A floor data entry's address +6 is the item set it's using, +8 is the item set kecleon shops on that floor use, +0xA is the item set for monster houses on that floor, and +0xC is the item set for items living in the floor's walls. 
