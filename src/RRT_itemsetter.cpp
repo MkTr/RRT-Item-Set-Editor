@@ -297,7 +297,7 @@ int ConvertListToInsertInROM(fstream* RRTROM, string listfilename, unsigned char
 	if(itemsetadres == 0xFFFFFFFF) {cout << "ERROR: item set ID invalid (pointer to item set does not exist)" << endl; return -1;}
 
 	result = getBinItemSetSize(RRTROM);
-	if(result == -1) {cout << "ERROR: invalid item ID (item set to replace is too large, implying non-itemset data was being read during its size test)" << endl; return -1;}
+	if(result == -1) {cout << "ERROR: invalid item ID (item set to replace has too many entries, implying non-itemset data was being read during its size test)" << endl; return -1;}
 	if(result == -2) {cout << "ERROR: invalid ROM" << endl; return -1;}
 
 	if((ItemSetBin.size() % 2 == 1) || (result % 2 == 1))
@@ -774,7 +774,6 @@ int getBinItemSetSize(fstream* ItemSetBin)
 
 		if(currententry == _MaxItemSetEntries) donereading = true;
 		if(currententry > _MaxItemSetEntries) return -1;
-		if(isetsize > _MaxItemSetEntries*2) return -1;
 	}
 
 	donereading = false;
