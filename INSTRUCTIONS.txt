@@ -28,7 +28,8 @@ For example, if Rocks is 050.00, Hold Items is 050.00, Geo Pebble is 100.00, and
 
 
 
-COMMAND LINE OPTIONS: After typing RRT_itemsetter.exe in the command window, add commands separated with a space before pressing enter. 
+COMMANDS: 
+After typing RRT_itemsetter.exe in the command window, add commands separated with a space before pressing enter. 
 
 "romname.gba"
 	getdungeonsets "Dungeon Name"
@@ -40,7 +41,7 @@ rawdata
 
 
 For example, valid commands look like this: 
-RRT_itemsetter.exe "Pokemon Mystery Dungeon Red Rescue Team.gba" getdungeonsets 3
+RRT_itemsetter.exe "Pokemon Mystery Dungeon Red Rescue Team.gba" getdungeonsets "Tiny Woods"
 RRT_itemsetter.exe rawdata create "my item list.txt"
 
 
