@@ -1,4 +1,4 @@
-# RRT-Item-Set-Editor
+# RRT Item Set Editor
 A command-line item set editor for US/Aus Pokemon Mystery Dungeon - Red Rescue Team. 
 
  - Converts item set data into readable, editable plain text lists
